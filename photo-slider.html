@@ -1,0 +1,167 @@
+<%= render partial: 'governance/v1/shared/navigation_bar' %>
+
+<div class="container-fluid main-content">
+  <div class="row">
+    <div class="col-sm-12">
+      <h2 class="page-header">民宿实名登记系统-记录列表</h2>
+      <div class="row">
+        <div class="col-sm-12">
+          <%= form_tag governance_v1_checking_ins_path, class: 'js-form search-filter-section', method: :get do %>
+            <div class="form-group col-sm-3">
+              <label for="room_name"><%= CheckingIn.human_attribute_name :room_name %>:</label>
+              <%= text_field_tag :room_name, params[:room_name], class: 'form-control', placeholder: '' %>
+            </div>
+
+            <div class="form-group col-sm-3">
+              <label for="tenant_address"><%= CheckingIn.human_attribute_name :tenant_address %>：</label>
+              <%= text_field_tag :tenant_address, params[:tenant_address], class: 'form-control', placeholder: '' %>
+            </div>
+            <div class="form-group col-sm-3">
+              <label for="tenant_mobile_phone_number"><%= CheckingIn.human_attribute_name :tenant_mobile_phone_number %>：</label>
+              <%= text_field_tag :tenant_mobile_phone_number, params[:tenant_mobile_phone_number], class: 'form-control', placeholder: '' %>
+            </div>
+            <div class="form-group col-sm-3">
+              <label for="tenant_name"><%= CheckingIn.human_attribute_name :tenant_name %>：</label>
+              <%= text_field_tag :tenant_name, params[:tenant_name], class: 'form-control', placeholder: '' %>
+            </div>
+            <div class="form-group col-sm-3">
+              <label for="practitioner_name"><%= CheckingIn.human_attribute_name :practitioner_name %>：</label>
+              <%= text_field_tag :practitioner_name, params[:practitioner_name], class: 'form-control', placeholder: '' %>
+            </div>
+            <div class="form-group col-sm-3">
+              <label for="shop_name"><%= CheckingIn.human_attribute_name :shop_name %>：</label>
+              <%= text_field_tag :shop_name, params[:shop_name], class: 'form-control', placeholder: '' %>
+            </div>
+            <div class="form-group col-sm-6">
+              <label for="from_date"><%= CheckingIn.human_attribute_name :created_at %>范围：</label>
+              <div class="input-daterange input-group datepicker date-range-wrap" id="">
+                <%= text_field_tag :opened_at, params[:opened_at], class: 'form-control' %>
+                <span class="input-group-addon">至</span>
+                <%= text_field_tag :closed_at, params[:closed_at], class: 'form-control' %>
+              </div>
+            </div>
+            <div class="form-group col-sm-3 button-line">
+              <%= button_tag type: :submit, class: 'btn btn-default' do %>
+                <i class="fa fa-search"></i> 查询
+              <% end %>
+              <button type="reset" class="btn btn-link"><i class="fa fa-close"></i> 取消</button>
+            </div>
+          <% end %>
+        </div>
+      </div>
+      <hr>
+      <div class="bootstrap-table history-order-table">
+        <% identity_card_photos_label  = CheckingIn.human_attribute_name :identity_card_photos %>
+        <% tenant_photos_label = CheckingIn.human_attribute_name :tenant_photos %>
+        <% tenant_identity_card_portraits_label  = CheckingIn.human_attribute_name :tenant_identity_card_portraits %>
+        <table class="js-photo-table" data-toggle="table" data-url="" data-sort-name="name" data-sort-order="desc" data-striped="true" data-pagination="false" data-checkbox="true" data-escape="false" data-valign="middle">
+          <thead>
+            <tr>
+              <th data-field="identity-card-photo" data-sortable="false">
+                照片
+              </th>
+              <% %w(tenant_name room_name tenant_address tenant_mobile_phone_number tenant_identification_number practitioner_name shop_name created_at).each do |field| %>
+                <%= content_tag :th, data: { field: field, sortable: false } do %>
+                  <%= CheckingIn.human_attribute_name field.to_sym %>
+                <% end %>
+              <% end %>
+            </tr>
+          </thead>
+          <tbody>
+            <% @checking_ins.each do |checking_in|%>
+              <tr>
+                <% #checking_in.tenant_mobile_phone_number[3..6] = "****" %>
+                <td class="table-center-align">
+                  <button type="button" class="js-show-photo-button btn btn-small btn-default view-img-btn" data-toggle="modal" data-identity-card-photos="<%= checking_in.identity_card_photos %>" data-tenant-photos="<%= checking_in.tenant_photos %>" data-tenant-identity-card-portraits="<%= checking_in.tenant_identity_card_portraits %>">
+                    查看
+                  </button>
+                </td>
+                <td><%= checking_in.tenant_name %></td>
+                <td><%= checking_in.room_name %></td>
+                <td><%= checking_in.tenant_address %></td>
+                <td><%= checking_in.tenant_mobile_phone_number %></td>
+                <td><%= checking_in.tenant_identification_number %></td>
+                <td><%= checking_in.practitioner_name %></td>
+                <td><%= checking_in.shop_name %></td>
+                <td><%= l checking_in.created_at, format: :human_time %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+        <%= will_paginate @checking_in, renderer: BootstrapPagination::Rails %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="js-photos-slider-model modal fade" id="photos-rotate-model" tabindex="-1" role="dialog" aria-labelledby="photos-slider-model-label">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="photos-slider-model-label">照片浏览</h4>
+      </div>
+      <div class="modal-body">
+        <div id="carousel-container" class="carousel slide" data-ride="carousel">
+          <!-- Indicators -->
+          <ol class="js-carousel-indicator-list carousel-indicators">
+            <!-- <li data-target="#carousel-example-generic" data-slide-to="0" class="js-carousel-photo-list active"></li>
+            <li data-target="#carousel-example-generic" data-slide-to="1" class="js-carousel-photo-list"></li>
+            <li data-target="#carousel-example-generic" data-slide-to="2" class="js-carousel-photo-list"></li> -->
+          </ol>
+
+          <!-- Wrapper for slides -->
+          <div class="js-carousel-inner carousel-inner" role="listbox">
+            <!-- <div class="item active">
+              <img src="http://image5.tuku.cn/pic/wallpaper/fengjing/weimeishijiefengjing/006.jpg" alt="">
+            </div>
+            <div class="item">
+              <img src="http://image5.tuku.cn/pic/wallpaper/fengjing/weimeishijiefengjing/007.jpg" alt="">
+            </div> -->
+          </div>
+
+          <!-- Controls -->
+          <a class="left carousel-control" href="#carousel-example-generic" role="button" data-slide="prev">
+            <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>
+            <span class="sr-only">上一个</span>
+          </a>
+          <a class="right carousel-control" href="#carousel-example-generic" role="button" data-slide="next">
+            <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+            <span class="sr-only">下一个</span>
+          </a>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<% content_for :title do %>
+  民宿实名登记系统-记录列表
+<% end %>
+
+<% content_for :meta do %>
+<% end %>
+
+<% content_for :style do %>
+<% end %>
+
+<% content_for :script do %>
+  <script id="photo-slider-item-template" type="text/html">
+    <li data-target='#carousel-container' data-slide-to=''></li>
+  </script>
+  <script id="photo-slider-image-template" type="text/html">
+    <div class='item'><img class="item-img" src="" alt=""><div class="image-preview"></div></div>
+  </script>
+  <script>
+    $('.datepicker').datepicker({
+        language: 'zh-CN',
+        autoclose: true,
+        todayHighlight: true,
+        format: 'yyyy-mm-dd',
+        orientation: 'bottom'
+    });
+  </script>
+  <%= javascript_include_tag 'governance/v1/checking_ins/index' %>
+<% end %>
